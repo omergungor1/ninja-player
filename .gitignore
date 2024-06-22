@@ -6,6 +6,9 @@
 .pnp.js
 .yarn/install-state.gz
 
+#ignore shared/firebaseconfig file
+/shared/firebaseconfig.js
+
 # testing
 /coverage
 
