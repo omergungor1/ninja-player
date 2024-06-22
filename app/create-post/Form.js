@@ -1,64 +1,97 @@
-import React, { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useSession, signIn, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
+import { useFormik } from 'formik';
+import * as Yup from 'yup'
+import { app } from '../../shared/FirebaseConfig';
+import { toast } from 'react-toastify';
+import { doc, getFirestore, setDoc } from 'firebase/firestore';
 
 function Form() {
-    const [startDate, setStartDate] = useState(new Date());
-    const [inputData, setInputData] = useState({});
 
     const { data: session, status } = useSession();
+    const db = getFirestore(app);
 
-    useEffect(() => {
-        setInputData(() => ({ userName: session?.user.name, email: session?.user.email, userImage: session?.user.image }));
-    }, []);
+    const validationSchema = Yup.object({
+        userName: Yup.string().required("Required"),
+        email: Yup.string().email('Please enter a valid email').required('Required'),
+        title: Yup.string().required('Required'),
+        desc: Yup.string().required('Required'),
+        date: Yup.date().required('Required'),
+        location: Yup.string().required('Required'),
+        zip: Yup.string().required('Required'),
+        game: Yup.string().required('Required')
+    });
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Aylar 0-11 arası olduğu için 1 eklenir
+    const day = String(now.getDate()).padStart(2, '0');
 
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData);
-        setInputData((values) => ({ ...values, userName: session?.user.name, email: session?.user.email, userImage: session?.user.image, ...data }));
-    }
-
-    const handleChange = (e) => {
-        // setInputData((values) => ({ ...values, [e.target.name]: e.target.value }));
-        // console.log(inputData);
-    }
+    const { handleSubmit, handleChange, values, errors } = useFormik({
+        initialValues: {
+            userName: session?.user.name,
+            email: session?.user.email,
+            userImage: session?.user.image,
+            title: '',
+            desc: '',
+            date: `${month} ${day},${year}`,
+            location: '',
+            zip: '',
+            game: '',
+        },
+        onSubmit: async (values) => {
+            // console.log(values);
+            await setDoc(doc(db, 'posts', Date.now().toString()), values);
+            // db.collection('posts').add(values)
+            // .then(() => {
+            //     console.log('success')
+            //     toast.success('Post created successfully')
+            // })
+            // .catch((error) => {
+            //     console.log('error')
+            //     toast.error(error.message)
+            // })
+        },
+        validationSchema: validationSchema,
+    });
 
     return (
         <form onSubmit={handleSubmit}>
             <div className='flex flex-col gap-y-4'>
-                <input onChange={handleChange} type="text" name='title' placeholder="Title" className="input input-bordered w-full max-w-xs" />
-                <textarea onChange={handleChange} name='desc' className="textarea textarea-bordered max-w-xs" placeholder="Write Description here..."></textarea>
+                <input onChange={handleChange} values={values.title} type="text" name='title' placeholder="Title" className="input input-bordered w-full max-w-xs" />
+                <span className='text-sm font-bold text-red-700'>{errors.title && errors.title}</span>
+                <textarea onChange={handleChange} values={values.desc} name='desc' className="textarea textarea-bordered max-w-xs" placeholder="Write Description here..."></textarea>
+                <span className='text-sm font-bold text-red-700'>{errors.desc && errors.desc}</span>
                 <DatePicker
                     name='date'
-                    // onChange={handleChange}
-                    selected={startDate}
-                    onChange={(date) => setStartDate(date)}
+                    selected={values.date}
+                    onChange={date => values.date = `${String(date.getMonth() + 1).padStart(2, '0')} ${String(date.getDate()).padStart(2, '0')},${date.getFullYear()}`}
                     className="input input-bordered w-full max-w-xs"
                 />
-                <input type="text" onChange={handleChange} name='location' placeholder="Location" className="input input-bordered w-full max-w-xs" />
-                <input type="text" onChange={handleChange} name='zip' placeholder="Zip" className="input input-bordered w-full max-w-xs" />
-                <select value={0} name='game' className="select select-bordered w-full max-w-xs">
+                <span className='text-sm font-bold text-red-700'>{errors.date && errors.date}</span>
+                <input type="text" onChange={handleChange} values={values.location} name='location' placeholder="Location" className="input input-bordered w-full max-w-xs" />
+                <span className='text-sm font-bold text-red-700'>{errors.location && errors.location}</span>
+                <input type="text" onChange={handleChange} values={values.zip} name='zip' placeholder="Zip" className="input input-bordered w-full max-w-xs" />
+                <span className='text-sm font-bold text-red-700'>{errors.zip && errors.zip}</span>
+                <select name='game' onChange={handleChange} values={values.game} className="select select-bordered w-full max-w-xs">
                     <option disabled selected
-                        option="true" value={0} key={0}>Select Game</option>
-                    <option option="true" value={1} key={1}>Tennis</option>
-                    <option option="true" value={2} key={2}>Cricket</option>
-                    <option option="true" value={3} key={3}>Football</option>
-                    <option option="true" value={4} key={4}>Baseball</option>
-                    <option option="true" value={5} key={5}>Basketball</option>
-                    <option option="true" value={6} key={6}>Badminton</option>
-                    <option option="true" value={7} key={7}>Table Tennis</option>
-                    <option option="true" value={8} key={8}>Swimming</option>
-                    <option option="true" value={9} key={9}>Running</option>
-                    <option option="true" value={10} key={10}>Boxing</option>
-                    <option option="true" value={11} key={11}>Yoga</option>
-                    <option option="true" value={12} key={12}>Weight Lifting</option>
-                    <option option="true" value={13} key={13}>Cardio</option>
-                    <option option="true" value={14} key={14}>Other</option>
+                        key={0}>Select Game</option>
+                    <option key={1}>Tennis</option>
+                    <option key={2}>Cricket</option>
+                    <option key={3}>Football</option>
+                    <option key={4}>Basketball</option>
+                    <option key={5}>Badminton</option>
+                    <option key={6}>Table Tennis</option>
+                    <option key={7}>Swimming</option>
+                    <option key={8}>Volleyball</option>
+                    <option key={9}>Golf</option>
+                    <option key={10}>Soccer</option>
+                    <option key={11}>Other</option>
                 </select>
-                <button className="btn btn-primary max-w-xs">Submit</button>
+                <span className='text-sm font-bold text-red-700'>{errors.game && errors.game}</span>
+
+                <button type='submit' className="btn btn-primary max-w-xs">Submit</button>
             </div>
         </form>
     )
