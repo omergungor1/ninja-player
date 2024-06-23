@@ -23,7 +23,11 @@ function Header() {
                         }}>Signout</button>
                         : <button onClick={() => { signIn("google") }} className="uppercase bg-white text-gray-500 p-2 px-3 h-12 border-[1px] rounded-full"><span className="hidden sm:block">Sing In</span> <HiArrowLeftOnRectangle className="sm:hidden text-[20px] text-black" /></button>
                 }
-                {session ? (<Image src={session?.user.image} alt="user image" width={40} height={40} className="h-12 w-12 rounded-full" />) : null}
+                {
+                    session ? (
+                        <Link href="/profile"><Image src={session?.user.image} alt="user image" width={40} height={40} className="h-12 w-12 rounded-full" /> </Link>
+                    ) : 'null'
+                }
             </div>
         </div>
     )
