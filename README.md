@@ -40,3 +40,4 @@ LAST VERSION
 
 Profile section will be added. (Not done yet.)
 Update the missing parts..!
+It still has some bugs.
