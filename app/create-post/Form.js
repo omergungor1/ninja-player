@@ -95,6 +95,15 @@ function Form() {
     const month = String(now.getMonth() + 1).padStart(2, '0'); // Aylar 0-11 arası olduğu için 1 eklenir
     const day = String(now.getDate()).padStart(2, '0');
 
+    const resetForm = () => {
+        values.title = '';
+        values.desc = '';
+        values.date = `${month} ${day},${year}`;
+        values.location = '';
+        values.zip = '';
+        values.game = '';
+    }
+
     const { handleSubmit, handleChange, values, errors, handleBlur } = useFormik({
         initialValues: {
             userName: session?.user.name,
@@ -108,17 +117,11 @@ function Form() {
             game: '',
         },
         onSubmit: async (values) => {
-            // console.log(values);
             await setDoc(doc(db, 'posts', Date.now().toString()), values);
-            // db.collection('posts').add(values)
-            // .then(() => {
-            //     console.log('success')
-            //     toast.success('Post created successfully')
-            // })
-            // .catch((error) => {
-            //     console.log('error')
-            //     toast.error(error.message)
-            // })
+            toast.success('Post created successfully')
+            //clear form
+            resetForm();
+
         },
         validationSchema: validationSchema,
     });
